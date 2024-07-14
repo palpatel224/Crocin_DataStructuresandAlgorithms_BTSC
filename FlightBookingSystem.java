@@ -1,115 +1,106 @@
 import java.util.*;
-
-public class FlightBookingSystem {
-    private Map<String, Queue<String>> seatLayout;
-    private Map<String, String> reservations;
-    private List<WaitlistEntry> waitlist;
-
-    public FlightBookingSystem(Map<String, Queue<String>> seatLayout) {
-        this.seatLayout = new HashMap<>(seatLayout);
-        this.reservations = new HashMap<>();
-        this.waitlist = new ArrayList<>();
+public class FlightBookingSystem{
+    class seatInfo{
+        String seatNo ;
+        String avl;
     }
-
-    public void initiateFlight() {
-        System.out.println("Flight initialized with seats: " + seatLayout);
-    }
-
-    public void reserveSeat(String seatType, String userId) {
-        if (seatLayout.containsKey(seatType) && !seatLayout.get(seatType).isEmpty()) {
-            String seat = seatLayout.get(seatType).poll();
-            reservations.put(userId, seat);
-            System.out.println("Reserved " + seat + " for user " + userId);
-        } else {
-            waitlist.add(new WaitlistEntry(userId, seatType));
-            System.out.println("User " + userId + " added to waitlist for " + seatType);
-        }
-    }
-
-    public boolean checkSeatAvailability(String seatType) {
-        return seatLayout.containsKey(seatType) && !seatLayout.get(seatType).isEmpty();
-    }
-
-    public String suggestOptimalSeat(List<String> preferences) {
-        for (String pref : preferences) {
-            if (checkSeatAvailability(pref)) {
-                return pref;
+    public static seatInfo[][] seats(int n){
+        seatInfo[][] seat = new seatInfo[n][6];
+        for(int i=0;i<n;i++){
+            for(int j=0;j<6;j++){
+                if(j==0||j==5){
+                    seat[i][j].avl = "A";
+                    seat[i][j].seatNo = "W"+(i+1);
+                }
+                else if(j==1||j==4){
+                    seat[i][j].avl = "A";
+                    seat[i][j].seatNo = "M"+(i+1);
+                }
+                else{
+                    seat[i][j].avl = "A";
+                    seat[i][j].seatNo = "A"+(i+1);
+                }
             }
         }
-        return null;
+        return seat;
     }
-
-    public void manageWaitlist() {
-        Iterator<WaitlistEntry> iterator = waitlist.iterator();
-        while (iterator.hasNext()) {
-            WaitlistEntry entry = iterator.next();
-            if (checkSeatAvailability(entry.getSeatType())) {
-                reserveSeat(entry.getSeatType(), entry.getUserId());
-                iterator.remove();
+    public static void display(seatInfo[][] seat){
+        for(int i=0;i<seat.length;i++){
+            for(int j=0;j<6;j++){
+                System.out.print(seat[i][j].seatNo+" "+seat[i][j].avl+" ");
+            }
+            System.out.println();
+        }
+    }
+    public static void book(seatInfo[][] seat,String seatNo){
+        for(int i=0;i<seat.length;i++){
+            for(int j=0;j<6;j++){
+                if(seat[i][j].seatNo.equals(seatNo)){
+                    seat[i][j].avl = "B";
+                    return;
+                }
             }
         }
     }
-
-    public void cancelReservation(String userId) {
-        if (reservations.containsKey(userId)) {
-            String seat = reservations.remove(userId);
-            String seatType = getSeatType(seat);
-            seatLayout.get(seatType).add(seat);
-            System.out.println("Cancelled reservation for user " + userId);
-            manageWaitlist();
-        } else {
-            System.out.println("No reservation found for user " + userId);
-        }
-    }
-
-    public void changeReservation(String userId, String newSeatType) {
-        cancelReservation(userId);
-        reserveSeat(newSeatType, userId);
-    }
-
-    private String getSeatType(String seat) {
-        for (Map.Entry<String, Queue<String>> entry : seatLayout.entrySet()) {
-            if (entry.getValue().contains(seat)) {
-                return entry.getKey();
+    public static void cancel(seatInfo[][] seat,String seatNo){
+        for(int i=0;i<seat.length;i++){
+            for(int j=0;j<6;j++){
+                if(seat[i][j].seatNo.equals(seatNo)){
+                    seat[i][j].avl = "A";
+                    return;
+                }
             }
         }
-        return null;
     }
-
-    private static class WaitlistEntry {
-        private final String userId;
-        private final String seatType;
-
-        public WaitlistEntry(String userId, String seatType) {
-            this.userId = userId;
-            this.seatType = seatType;
-        }
-
-        public String getUserId() {
-            return userId;
-        }
-
-        public String getSeatType() {
-            return seatType;
+    public static void changeSeat(seatInfo[][] seat,String seatNo){
+        for(int i=0;i<seat.length;i++){
+            for(int j=0;j<6;j++){
+                if(seat[i][j].seatNo.equals(seatNo)){
+                    if(seat[i][j].avl.equals("A")){
+                        seat[i][j].avl = "B";
+                    }
+                    else{
+                        seat[i][j].avl = "Seat if Already Booked";
+                    }
+                    return;
+                }
+            }
         }
     }
 
     public static void main(String[] args) {
-        Map<String, Queue<String>> seatLayout = new HashMap<>();
-        seatLayout.put("Aisle", new LinkedList<>(Arrays.asList("1A", "2A", "3A")));
-        seatLayout.put("Window", new LinkedList<>(Arrays.asList("1W", "2W", "3W")));
-        seatLayout.put("Middle", new LinkedList<>(Arrays.asList("1M", "2M", "3M")));
-
-        FlightBookingSystem system = new FlightBookingSystem(seatLayout);
-        system.initiateFlight();
-        system.reserveSeat("Window", "User1");
-        system.reserveSeat("Aisle", "User2");
-        system.reserveSeat("Middle", "User3");
-        System.out.println("Suggested seat: " + system.suggestOptimalSeat(Arrays.asList("Window", "Aisle", "Middle")));
-        System.out.println("Is Window available? " + system.checkSeatAvailability("Window"));
-        system.manageWaitlist();
-        system.cancelReservation("User1");
-        system.changeReservation("User2", "Window");
+        seatInfo[][] seat = seats(7);
+        display(seat);
+        System.out.println("W = Window, M = Middle, A = Aisle");
+        System.out.println("A = Available, B = Booked");
+        System.out.println("Press the repsective key to perform the operation");
+        System.out.println("1. Book a seat");
+        System.out.println("2. Cancel a seat");
+        System.out.println("3. Change a seat");
+        Scanner sc = new Scanner(System.in);
+        int choice = sc.nextInt();
+        String seatNo = new String();
+        switch(choice){
+            case 1:
+                System.out.println("Enter the seat number to book");
+                seatNo = sc.next();
+                book(seat,seatNo);
+                display(seat);
+                break;
+            case 2:
+                System.out.println("Enter the seat number to cancel");
+                seatNo = sc.next();
+                cancel(seat,seatNo);
+                display(seat);
+                break;
+            case 3:
+                System.out.println("Enter the seat number to change");
+                seatNo = sc.next();
+                changeSeat(seat,seatNo);
+                display(seat);
+                break;
+            default:
+                System.out.println("Invalid Choice");
+        }
     }
 }
-
